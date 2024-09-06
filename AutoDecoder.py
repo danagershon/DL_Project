@@ -20,18 +20,28 @@ class AutoDecoder(nn.Module):
         """
         super().__init__()
 
-        # Expand the latent vector into a feature map via a fully connected layer
         self.feature_map_size = feature_map_size
-        self.fc = nn.Linear(latent_dim, 7 * 7 * feature_map_size)
+
+        # Fully connected layers to expand the latent vector into a feature map
+        self.fc = nn.Sequential(
+            nn.Linear(latent_dim, 7 * 7 * self.feature_map_size),
+            nn.ReLU(),
+            nn.Linear(7 * 7 * self.feature_map_size, 7 * 7 * self.feature_map_size),
+            nn.ReLU()
+        )
         
-        # Decoder architecture. Using ConvTranspose2d layers to "reconstruct" the image
+        # Decoder architecture using ConvTranspose2d layers to upsample and reconstruct the image
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(feature_map_size, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.ConvTranspose2d(self.feature_map_size, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(256),  # BatchNorm after ConvTranspose2d
             nn.ReLU(),
+            
             nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
+            nn.BatchNorm2d(128),  # BatchNorm after ConvTranspose2d
             nn.ReLU(),
-            nn.Conv2d(128, img_channels, kernel_size=3, padding=1),
-            nn.Sigmoid()
+            
+            nn.Conv2d(128, img_channels, kernel_size=3, padding=1),  # Output layer (28x28, 1 channel)
+            nn.Sigmoid()  # Ensure output is between [0, 1]
         )
 
     def forward(self, z):
@@ -41,11 +51,10 @@ class AutoDecoder(nn.Module):
         :param z: the latent vector for the sample
         :return: the reconstructed image
         """
-        # Extract feature map from the latent vector
+        # Expand latent vector to feature map
         z = self.fc(z)
-        # Reshape to (batch_size, feature_map_size, height, width)
-        z = z.view(-1, self.feature_map_size, 7, 7)
-        # Reconstruct the image with decoder
+        z = z.view(-1, self.feature_map_size, 7, 7)  # Reshape to (batch_size, feature_map_size, 7, 7)
+        # Pass through decoder to upsample and reconstruct the image
         z = self.decoder(z)
 
         return z
@@ -120,12 +129,14 @@ def train_auto_encoder(batch_size=32,
     # TODO: consider different lr for the model and latents
     # TODO: consider a different optimizer (though Adam is considered good in general)
 
+    epoch_losses = []
+
     # Start total training time measurement
     total_start_time = time.time()
 
     # Training loop
     for epoch in range(epochs):
-        start_time = time.time()  # Start measuring time for this epoch
+        epoch_start_time = time.time()  # Start measuring time for this epoch
         model.train()  # set model to training mode
         epoch_loss = 0
 
@@ -154,23 +165,35 @@ def train_auto_encoder(batch_size=32,
             epoch_loss += loss.item()
 
         # Calculate time taken for the epoch
-        end_time = time.time()
-        epoch_duration = end_time - start_time
+        epoch_end_time = time.time()
+        epoch_duration = epoch_end_time - epoch_start_time
+        total_elapsed_time = epoch_end_time - total_start_time
 
-        # Print the average loss per epoch
         avg_epoch_loss = epoch_loss / len(train_dl)
-        print(f'Epoch [{epoch+1}/{epochs}], Loss: {avg_epoch_loss:.4f}')
+        # Print the average loss, time for this epoch, and total elapsed time
+        print(f'Epoch [{epoch+1}/{epochs}], Loss: {avg_epoch_loss:.4f}, Epoch Time: {epoch_duration:.2f} seconds, Total Time: {total_elapsed_time:.2f} seconds')
+        epoch_losses.append(avg_epoch_loss)
 
     # End total training time measurement
     total_end_time = time.time()
     total_training_time = total_end_time - total_start_time
 
     # Print total training time
-    print(f'Total training time: {total_training_time:.2f} seconds')
+    print(f'Total training time: {total_training_time/60:.2f} min')
 
     # Save model and latent vectors after training
     torch.save(model.state_dict(), 'auto_decoder.pth')
     torch.save(latents, 'latent_vectors.pth')
+
+    # ---------------- Plot the Loss ----------------
+    plt.figure()
+    plt.plot(range(1, epochs+1), epoch_losses, label="Training Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training Loss Over Epochs")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
     # ---------------- visual evaluation ----------------
     sample_indices = torch.randint(0, len(train_ds), (5,))
