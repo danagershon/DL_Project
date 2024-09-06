@@ -8,24 +8,26 @@ import utils
 
 
 class AutoDecoder(nn.Module):
-    def __init__(self, latent_dim=64, img_channels=1):
+    def __init__(self, latent_dim=64, img_channels=1, feature_map_size=512):
         """
         Initialize the AutoDecoder.
         :param latent_dim: Dimensionality of the latent space
         :param img_channels: Number of image channels (1 for grayscale images in Fashion MNIST)
+        :param feature_map_size: 128/256
         """
         super().__init__()
 
         # Fully connected layers to expand the latent vector into a feature map
-        self.fc = nn.Linear(latent_dim, 7 * 7 * 128)  # Increase feature map size to 128 channels
+        self.feature_map_size = feature_map_size
+        self.fc = nn.Linear(latent_dim, 7 * 7 * self.feature_map_size)
         
         # Decoder architecture using ConvTranspose2d layers to reconstruct the image
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),  # 7x7 -> 14x14
+            nn.ConvTranspose2d(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(),
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),  # 14x14 -> 28x28
+            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(),
-            nn.Conv2d(32, img_channels, kernel_size=3, padding=1),  # 28x28 -> 28x28
+            nn.Conv2d(128, img_channels, kernel_size=3, padding=1),
             nn.Sigmoid()
         )
 
@@ -36,21 +38,30 @@ class AutoDecoder(nn.Module):
         :return: the reconstructed image
         """
         z = self.fc(z)
-        z = z.view(-1, 128, 7, 7)  # Reshape to (batch_size, channels, height, width)
+        z = z.view(-1, self.feature_map_size, 7, 7)  # Reshape to (batch_size, feature_map_size, height, width)
         z = self.decoder(z)  # Apply the CNN decoder to reconstruct the image
         return z
     
 
+# MSE loss produces bad results
 def reconstruction_loss_MSE(x, x_rec):
     return torch.mean((x - x_rec) ** 2)
 
 
-def reconstruction_loss_CE(x, x_rec):
+# BCE loss produces best results
+def reconstruction_loss_BCE(x, x_rec):
+    # Add a channel dimension to x so it matches x_rec's shape
+    x = x.unsqueeze(1)  # Shape will become [batch_size, 1, 28, 28]
     return torch.nn.functional.binary_cross_entropy(x_rec, x)
 
 
-def train_auto_encoder(batch_size=32, latent_dim=64, epochs=100, lr=1e-3, reconstruction_loss=reconstruction_loss_MSE,
-                       latent_initialization="normal", add_reg_loss=False):
+def train_auto_encoder(batch_size=32, latent_dim=256, epochs=100, lr=1e-4, reconstruction_loss=reconstruction_loss_BCE,
+                       latent_initialization="normal", latent_reg_loss=1e-5, normal_latent_initialization_variance=0.1):
+    """
+    latent_dim = 32/64/128/256
+    latent_reg_loss = 1e-5 or 1e-6 or 1e-4
+    normal_latent_initialization_variance = 0.01 or 0.1
+    """
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=batch_size)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')    
 
@@ -62,7 +73,7 @@ def train_auto_encoder(batch_size=32, latent_dim=64, epochs=100, lr=1e-3, recons
     elif latent_initialization == "uniform":
         latents = torch.rand(len(train_ds), latent_dim, requires_grad=True, device=device)
     else:  # normal
-        latents = torch.normal(0, 0.01, size=(len(train_ds), latent_dim), requires_grad=True, device=device)
+        latents = torch.normal(0, normal_latent_initialization_variance, size=(len(train_ds), latent_dim), requires_grad=True, device=device)
 
     # Optimizers
     optimizer_model = torch.optim.Adam(model.parameters(), lr=lr)
@@ -83,8 +94,8 @@ def train_auto_encoder(batch_size=32, latent_dim=64, epochs=100, lr=1e-3, recons
             x_rec = model(latent_vectors)
 
             # Compute the reconstruction loss
-            if add_reg_loss:
-                reg_loss = 1e-4 * torch.norm(latents, p=2)  # Define the regularization term (L2 regularization)
+            if latent_reg_loss is not None:
+                reg_loss = latent_reg_loss * torch.norm(latents, p=2)  # Decrease the weight of regularization
                 loss = reconstruction_loss(x, x_rec) + reg_loss
             else:
                 loss = reconstruction_loss(x, x_rec)
