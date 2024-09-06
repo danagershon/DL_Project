@@ -5,7 +5,6 @@ import torch.optim
 import matplotlib.pyplot as plt
 
 import utils
-import evaluate
 
 
 class AutoDecoder(nn.Module):
@@ -17,17 +16,17 @@ class AutoDecoder(nn.Module):
         """
         super().__init__()
 
-        # Fully connected layer to expand the latent vector into a feature map suitable for the CNN
-        self.fc = nn.Linear(latent_dim, 7 * 7 * 64)  # Start from a smaller spatial resolution (7x7)
+        # Fully connected layers to expand the latent vector into a feature map
+        self.fc = nn.Linear(latent_dim, 7 * 7 * 128)  # Increase feature map size to 128 channels
         
         # Decoder architecture using ConvTranspose2d layers to reconstruct the image
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),  # 7x7 -> 14x14
+            nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),  # 7x7 -> 14x14
             nn.ReLU(),
-            nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1),  # 14x14 -> 28x28
+            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),  # 14x14 -> 28x28
             nn.ReLU(),
-            nn.Conv2d(16, img_channels, kernel_size=3, padding=1),  # 28x28 -> 28x28 (final image size)
-            nn.Sigmoid()  # Output pixel values in [0, 1]
+            nn.Conv2d(32, img_channels, kernel_size=3, padding=1),  # 28x28 -> 28x28
+            nn.Sigmoid()
         )
 
     def forward(self, z):
@@ -37,19 +36,33 @@ class AutoDecoder(nn.Module):
         :return: the reconstructed image
         """
         z = self.fc(z)
-        z = z.view(-1, 64, 7, 7)  # Reshape to (batch_size, channels, height, width)
+        z = z.view(-1, 128, 7, 7)  # Reshape to (batch_size, channels, height, width)
         z = self.decoder(z)  # Apply the CNN decoder to reconstruct the image
         return z
+    
+
+def reconstruction_loss_MSE(x, x_rec):
+    return torch.mean((x - x_rec) ** 2)
 
 
-def train_auto_encoder(batch_size=32, latent_dim=64, epochs=20, lr=1e-3):
+def reconstruction_loss_CE(x, x_rec):
+    return torch.nn.functional.binary_cross_entropy(x_rec, x)
+
+
+def train_auto_encoder(batch_size=32, latent_dim=64, epochs=100, lr=1e-3, reconstruction_loss=reconstruction_loss_MSE,
+                       latent_initialization="normal", add_reg_loss=False):
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=batch_size)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')    
 
     model = AutoDecoder(latent_dim=latent_dim).to(device)
 
     # Initialize latent vectors for each sample in the training set
-    latents = torch.randn(len(train_ds), latent_dim, requires_grad=True, device=device)  # Random initialization of latents
+    if latent_initialization == "random":
+        latents = torch.randn(len(train_ds), latent_dim, requires_grad=True, device=device)  # Random initialization of latents
+    elif latent_initialization == "uniform":
+        latents = torch.rand(len(train_ds), latent_dim, requires_grad=True, device=device)
+    else:  # normal
+        latents = torch.normal(0, 0.01, size=(len(train_ds), latent_dim), requires_grad=True, device=device)
 
     # Optimizers
     optimizer_model = torch.optim.Adam(model.parameters(), lr=lr)
@@ -70,7 +83,11 @@ def train_auto_encoder(batch_size=32, latent_dim=64, epochs=20, lr=1e-3):
             x_rec = model(latent_vectors)
 
             # Compute the reconstruction loss
-            loss = evaluate.reconstruction_loss(x, x_rec)
+            if add_reg_loss:
+                reg_loss = 1e-4 * torch.norm(latents, p=2)  # Define the regularization term (L2 regularization)
+                loss = reconstruction_loss(x, x_rec) + reg_loss
+            else:
+                loss = reconstruction_loss(x, x_rec)
 
             # Backpropagation
             optimizer_model.zero_grad()
