@@ -86,7 +86,7 @@ class VariationalAutoDecoder(nn.Module):
         z = self.distribution_layer(z) # mu & sigma
 
         # Generate Normal noise N(0,1)
-        noise = torch.normal(0, 1, size=(z.size()[0], self.latent_dim), requires_grad=True, device=z.)
+        noise = torch.normal(0, 1, size=(z.size()[0], self.latent_dim), requires_grad=True, device=z.device)
 
         # Corresponding Latent Vector:
         z = noise * z[..., self.latent_dim : ] + z[..., : self.latent_dim]
