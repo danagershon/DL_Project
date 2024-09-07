@@ -79,7 +79,7 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples
     plt.close()  # Close the figure to avoid displaying
 
 
-def evaluate_model(model, data_loader, latents, device, hyperparameters, is_train_set=True, visualize=False, constant_sampling=True):
+def evaluate_model(model, data_loader, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=False, constant_sampling=True):
     """
     Evaluate the model on a given dataset. For the training set, it uses the passed latents.
     For the test set, it initializes and optimizes new latent vectors from a normal distribution.
@@ -90,6 +90,7 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
     :param latents: Latent vectors for the training set or None for the test set
     :param device: Device to run the evaluation on (CPU or GPU)
     :param hyperparameters: Dictionary containing hyperparameters
+    :param output_dir: Directory to save the reconstructed images
     :param is_train_set: Boolean indicating if evaluating on the training set or test set
     :param visualize: Whether to visualize reconstructed images
     :param constant_sampling: Whether to sample two images per class
@@ -128,7 +129,7 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
                 sample_indices = get_classwise_sample_indices(data_loader.dataset, num_samples_per_class=2)  # Sample two per class
             else:
                 sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, latents, data_loader.dataset, sample_indices)
+            show_original_vs_reconstructed(model, latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="train_reconstructed_images.png")
 
         return avg_loss
     else:
@@ -169,7 +170,7 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
                 sample_indices = get_classwise_sample_indices(data_loader.dataset, num_samples_per_class=2)  # Sample two per class
             else:
                 sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, test_latents, data_loader.dataset, sample_indices)
+            show_original_vs_reconstructed(model, test_latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="test_reconstructed_images.png")
 
         return avg_loss
 
