@@ -192,7 +192,8 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir
 
     # Initialize the model with the same architecture
     model = AutoDecoder(latent_dim=hyperparameters['latent_dim'], 
-                        feature_map_size=hyperparameters['feature_map_size']).to(device)
+                        feature_map_size=hyperparameters['feature_map_size'],
+                        dropout_rate=hyperparameters['dropout_rate']).to(device)
 
     # Load the saved model weights
     model.load_state_dict(torch.load(model_path, map_location=device))
