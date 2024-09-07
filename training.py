@@ -17,6 +17,7 @@ def train_auto_encoder(batch_size=32,
                        latent_reg_loss_lambda=1e-5, 
                        normal_latent_initialization_variance=0.1,
                        patience=10,
+                       dropout_rate=0,
                        output_dir=None,
                        **kw):
     """
@@ -31,14 +32,17 @@ def train_auto_encoder(batch_size=32,
     :param latent_initialization: the distribution type to initialize latent vectors from ('normal', 'random', 'uniform')
     :param latent_reg_loss_lambda: L2 regularization strength on latent vectors (if 0, there is no regularization)
     :param patience: Number of epochs with no improvement after which training will be stopped
+    :param dropout_rate: dropout rate for the Auto Decoder architecture
     :param output_dir: Directory to save the output files
     """
     # load fashion-MNIST dataset
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=batch_size)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')    
 
-    model = AutoDecoder(latent_dim=latent_dim, feature_map_size=feature_map_size).to(device)
-
+    model = AutoDecoder(latent_dim=latent_dim, 
+                        feature_map_size=feature_map_size, 
+                        dropout_rate=dropout_rate).to(device)
+    
     # Save the model architecture into a file
     saving_utilities.save_model_architecture(model, output_dir)
 

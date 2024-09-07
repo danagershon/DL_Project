@@ -4,43 +4,66 @@ import torch.nn as nn
 class AutoDecoder(nn.Module):
     """
     AutoDecoder class that maps latent vectors to reconstructed images using 
-    a fully connected layer and a decoder made of ConvTranspose2d layers.
+    a fully connected layer and a decoder made of ConvTranspose2d layers with optional dropout.
     """
 
-    def __init__(self, latent_dim=64, img_channels=1, feature_map_size=512, initial_map_size=7):
+    def __init__(self, latent_dim=64, img_channels=1, feature_map_size=512, initial_map_size=7, dropout_rate=0):
         """
         :param latent_dim: Dimensionality of the latent space
         :param img_channels: Number of image channels (1 for grayscale images in Fashion MNIST)
         :param feature_map_size: Number of feature maps to first extract from the latent vector, before going through CNN (e.g., 128/256/512)
         :param initial_map_size: Size of the initial spatial map before upsampling (e.g., 7 for a 7x7 map)
+        :param dropout_rate: Dropout rate, if 0, no dropout will be applied
         """
         super().__init__()
 
         self.feature_map_size = feature_map_size
         self.initial_map_size = initial_map_size
         self.fc_output_size = self.initial_map_size * self.initial_map_size * self.feature_map_size
+        self.dropout_rate = dropout_rate
 
         # Fully connected layers to expand the latent vector into a feature map
-        self.fc = nn.Sequential(
+        fc_layers = [
             nn.Linear(latent_dim, self.fc_output_size),
-            nn.ReLU(),
-            nn.Linear(self.fc_output_size, self.fc_output_size),
             nn.ReLU()
-        )
+        ]
+
+        if dropout_rate > 0:
+            fc_layers.append(nn.Dropout(dropout_rate))
+
+        fc_layers.append(nn.Linear(self.fc_output_size, self.fc_output_size))
+        fc_layers.append(nn.ReLU())
+
+        if dropout_rate > 0:
+            fc_layers.append(nn.Dropout(dropout_rate))
+
+        self.fc = nn.Sequential(*fc_layers)
         
         # Decoder architecture using ConvTranspose2d layers to upsample and reconstruct the image
-        self.decoder = nn.Sequential(
+        decoder_layers = [
             nn.ConvTranspose2d(self.feature_map_size, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(256),  # BatchNorm after ConvTranspose2d
+            nn.BatchNorm2d(256),
             nn.ReLU(),
-            
+        ]
+
+        if dropout_rate > 0:
+            decoder_layers.append(nn.Dropout(dropout_rate))
+
+        decoder_layers.extend([
             nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.BatchNorm2d(128),  # BatchNorm after ConvTranspose2d
+            nn.BatchNorm2d(128),
             nn.ReLU(),
-            
+        ])
+
+        if dropout_rate > 0:
+            decoder_layers.append(nn.Dropout(dropout_rate))
+
+        decoder_layers.extend([
             nn.Conv2d(128, img_channels, kernel_size=3, padding=1),  # Output layer (28x28, 1 channel)
             nn.Sigmoid()  # Ensure output is between [0, 1]
-        )
+        ])
+
+        self.decoder = nn.Sequential(*decoder_layers)
 
     def forward(self, z):
         """
