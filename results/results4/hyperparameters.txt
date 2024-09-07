@@ -1,0 +1,12 @@
+batch_size: 32
+latent_dim: 256
+feature_map_size: 256
+epochs: 100
+lr: 0.0001
+reconstruction_loss: <function reconstruction_loss_BCE at 0x7f1d2d7971f0>
+latent_initialization: normal
+latent_reg_loss_lambda: 1e-05
+normal_latent_initialization_variance: 0.1
+latent_epochs_for_test: 20
+latent_lr_for_test: 0.001
+dropout_rate: 0.2
