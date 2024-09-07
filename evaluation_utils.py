@@ -30,7 +30,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=2):
     return selected_indices
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples=5, output_dir=None, filename="reconstructed_images.png"):
+def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png"):
     """
     Save original vs reconstructed images side by side.
 
@@ -38,7 +38,6 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples
     :param latents: Latent vectors of the dataset
     :param dataset: The dataset from which to sample images
     :param indices: Indices of the samples to display
-    :param num_samples: Number of samples to display (default: 5)
     :param output_dir: Directory to save the output images
     :param filename: Filename to save the reconstructed images
     """
@@ -48,7 +47,7 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples
         original_images = []
         reconstructed_images = []
         
-        for idx in indices[:num_samples]:
+        for idx in indices:
             # Original image
             original_img = dataset[idx][1].float() / 255.0  # Normalize to [0, 1]
             original_images.append(original_img)
@@ -58,8 +57,10 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
     
+    num_samples = len(indices)  # Set the number of samples based on the actual number of indices
+
     # Plot original vs reconstructed images
-    fig, axs = plt.subplots(2, num_samples, figsize=(num_samples*2, 4))
+    fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))
     for i in range(num_samples):
         # Original image
         axs[0, i].imshow(original_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
