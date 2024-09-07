@@ -32,7 +32,7 @@ def main(train_flag, results_dir=None):
     evaluation_utils.load_and_evaluate_model(
         model_path=f'{results_dir}/variational_auto_decoder.pth',
         latent_path=f'{results_dir}/variational_latent_vectors.pth',
-        hyperparameters=auto_decoder_hyperparameters,
+        hyperparameters=variational_auto_decoder_hyperparameters,
         output_dir=results_dir
     )
 

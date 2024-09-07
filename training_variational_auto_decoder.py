@@ -128,7 +128,7 @@ def train_variational_auto_decoder(batch_size=32,
     print(f'Total training time: {total_training_time/60:.2f} min')
 
     # Save model and latent vectors after training
-    torch.save(model.state_dict(), f'{output_dir}/auto_decoder.pth')
+    torch.save(model.state_dict(), f'{output_dir}/variational_auto_decoder.pth')
     torch.save(latents, f'{output_dir}/latent_vectors.pth')
 
     # ---------------- Save the Loss Plot ----------------
