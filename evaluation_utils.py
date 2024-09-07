@@ -204,10 +204,28 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir
 
     # Evaluate on training set (using the saved latents)
     print("Evaluating on Training Set...")
-    train_loss = evaluate_model(model, train_dl, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=True)
+    train_loss = evaluate_model(
+        model=model, 
+        data_loader=train_dl, 
+        latents=latents, 
+        device=device, 
+        hyperparameters=hyperparameters, 
+        output_dir=output_dir, 
+        is_train_set=True, 
+        visualize=True
+    )
     print(f"Training Set Loss: {train_loss:.4f}")
 
     # Evaluate on test set (initializing and optimizing new latents)
     print("Evaluating on Test Set...")
-    test_loss = evaluate_model(model, test_dl, latents=None, device=device, hyperparameters=hyperparameters, output_dir=output_dir, is_train_set=False, visualize=True)
+    test_loss = evaluate_model(
+        model=model, 
+        data_loader=test_dl, 
+        latents=None, 
+        device=device, 
+        hyperparameters=hyperparameters, 
+        output_dir=output_dir, 
+        is_train_set=False, 
+        visualize=True
+    )
     print(f"Test Set Loss: {test_loss:.4f}")
