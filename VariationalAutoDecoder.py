@@ -23,9 +23,17 @@ class VariationalAutoDecoder(nn.Module):
         self.latent_dim = latent_dim
         self.dropout_rate = dropout_rate
 
+
+        # Distribution Layers
+        distribution_layers = [
+            #TODO LEFT add more layers?
+            nn.Linear(input_dim, 2*latent_dim) #For mu & sigma
+        ]
+
+        
         # Fully connected layers to expand the latent vector into a feature map
         fc_layers = [
-            nn.Linear(input_dim, self.fc_output_size),
+            nn.Linear(latent_dim, self.fc_output_size),
             nn.ReLU()
         ]
 
@@ -39,11 +47,6 @@ class VariationalAutoDecoder(nn.Module):
             fc_layers.append(nn.Dropout(dropout_rate))
 
         self.fc = nn.Sequential(*fc_layers)
-
-        # Distribution Layers
-        distribution_layers = [
-            nn.Linear(self.fc_output_size, 2*latent_dim) #For mu & sigma
-        ]
 
         self.distribution_layer = nn.Sequential(*distribution_layers)
         
@@ -80,16 +83,16 @@ class VariationalAutoDecoder(nn.Module):
         :param z: the latent vector for the sample
         :return: the reconstructed image
         """
-        # Expand latent vector to feature map
-        z = self.fc(z)
-
         z = self.distribution_layer(z) # mu & sigma
 
         # Generate Normal noise N(0,1)
-        noise = torch.normal(0, 1, size=(z.size[0], self.latent_dim), requires_grad=True, device=device)
+        noise = torch.normal(0, 1, size=(z.size()[0], self.latent_dim), requires_grad=True, device=z.)
 
         # Corresponding Latent Vector:
         z = noise * z[..., self.latent_dim : ] + z[..., : self.latent_dim]
+        
+        # Expand latent vector to feature map
+        z = self.fc(z)
         
         # Reshape to (batch_size, feature_map_size, initial_map_size, initial_map_size)
         z = z.view(-1, self.feature_map_size, self.initial_map_size, self.initial_map_size)
