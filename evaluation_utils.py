@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.optim
 import matplotlib.pyplot as plt
@@ -5,15 +6,17 @@ import utils
 from AutoDecoder import AutoDecoder
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples=5):
+def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples=5, output_dir=None, filename="reconstructed_images.png"):
     """
-    Display original vs reconstructed images side by side.
+    Save original vs reconstructed images side by side.
 
     :param model: Trained AutoDecoder model
     :param latents: Latent vectors of the dataset
     :param dataset: The dataset from which to sample images
     :param indices: Indices of the samples to display
     :param num_samples: Number of samples to display (default: 5)
+    :param output_dir: Directory to save the output images
+    :param filename: Filename to save the reconstructed images
     """
     model.eval()  # Set model to evaluation mode
     with torch.no_grad():
@@ -44,10 +47,15 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples
         axs[1, i].axis('off')
         axs[1, i].set_title('Reconstructed')
 
-    plt.show()
+    # Save the figure
+    if output_dir:
+        plt.savefig(f'{output_dir}/{filename}')
+    else:
+        plt.savefig(f'{filename}')
+    plt.close()  # Close the figure to avoid displaying
 
 
-def evaluate_model(model, data_loader, latents, device, hyperparameters, is_train_set=True, visualize=False):
+def evaluate_model(model, data_loader, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=False):
     """
     Evaluate the model on a given dataset. For the training set, it uses the passed latents.
     For the test set, it initializes and optimizes new latent vectors from a normal distribution.
@@ -58,6 +66,7 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
     :param latents: Latent vectors for the training set or None for the test set
     :param device: Device to run the evaluation on (CPU or GPU)
     :param hyperparameters: Dictionary containing hyperparameters
+    :param output_dir: Directory to save the results
     :param is_train_set: Boolean indicating if evaluating on the training set or test set
     :param visualize: Whether to visualize reconstructed images
     :return: Average loss over the dataset
@@ -92,7 +101,9 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
         # Optionally visualize reconstructed images from the training set
         if visualize:
             sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, latents, data_loader.dataset, sample_indices)
+            show_original_vs_reconstructed(
+                model, latents, data_loader.dataset, sample_indices, output_dir, filename="train_reconstructed_images.png"
+            )
 
         return avg_loss
     else:
@@ -130,12 +141,14 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, is_trai
         # Optionally visualize reconstructed images from the test set
         if visualize:
             sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, test_latents, data_loader.dataset, sample_indices)
+            show_original_vs_reconstructed(
+                model, test_latents, data_loader.dataset, sample_indices, output_dir, filename="test_reconstructed_images.png"
+            )
 
         return avg_loss
 
 
-def load_and_evaluate_model(model_path, latent_path, hyperparameters):
+def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir):
     """
     Load the trained model and latent vectors from saved .pth files and evaluate on the training and test sets.
     The function extracts relevant hyperparameters from the passed dictionary.
@@ -143,6 +156,7 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters):
     :param model_path: Path to the saved model (.pth) file
     :param latent_path: Path to the saved latent vectors (.pth) file
     :param hyperparameters: Dictionary containing hyperparameters
+    :param output_dir: Directory to save the results
     :return: None
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -163,10 +177,10 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters):
 
     # Evaluate on training set (using the saved latents)
     print("Evaluating on Training Set...")
-    train_loss = evaluate_model(model, train_dl, latents, device, hyperparameters, is_train_set=True, visualize=True)
+    train_loss = evaluate_model(model, train_dl, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=True)
     print(f"Training Set Loss: {train_loss:.4f}")
 
     # Evaluate on test set (initializing and optimizing new latents)
     print("Evaluating on Test Set...")
-    test_loss = evaluate_model(model, test_dl, latents=None, device=device, hyperparameters=hyperparameters, is_train_set=False, visualize=True)
+    test_loss = evaluate_model(model, test_dl, latents=None, device=device, hyperparameters=hyperparameters, output_dir=output_dir, is_train_set=False, visualize=True)
     print(f"Test Set Loss: {test_loss:.4f}")

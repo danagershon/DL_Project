@@ -3,6 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 import utils
 import losses
+import saving_utilities
 from AutoDecoder import AutoDecoder
 
 
@@ -15,7 +16,8 @@ def train_auto_encoder(batch_size=32,
                        latent_initialization="normal", 
                        latent_reg_loss_lambda=1e-5, 
                        normal_latent_initialization_variance=0.1,
-                       early_stopping_patience=10):
+                       patience=10,
+                       output_dir=None):
     """
     Train the AutoDecoder on the Fashion MNIST dataset with Early Stopping.
 
@@ -27,15 +29,17 @@ def train_auto_encoder(batch_size=32,
     :param reconstruction_loss: Loss function for reconstruction (BCE or MSE)
     :param latent_initialization: the distribution type to initialize latent vectors from ('normal', 'random', 'uniform')
     :param latent_reg_loss_lambda: L2 regularization strength on latent vectors (if 0, there is no regularization)
-    :param normal_latent_initialization_variance: Variance used for normal initialization of latent vectors
     :param patience: Number of epochs with no improvement after which training will be stopped
+    :param output_dir: Directory to save the output files
     """
-
-    # Load fashion-MNIST dataset
+    # load fashion-MNIST dataset
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=batch_size)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')    
 
     model = AutoDecoder(latent_dim=latent_dim, feature_map_size=feature_map_size).to(device)
+
+    # Save the model architecture into a file
+    saving_utilities.save_model_architecture(model, output_dir)
 
     # Initialize a random latent vector for each sample in the training set
     if latent_initialization == "random":
@@ -45,9 +49,9 @@ def train_auto_encoder(batch_size=32,
     else:  # normal
         latents = torch.normal(0, normal_latent_initialization_variance, size=(len(train_ds), latent_dim), requires_grad=True, device=device)
 
-    # Define optimizers
+    # define optimizers
     optimizer_model = torch.optim.Adam(model.parameters(), lr=lr)
-    optimizer_latents = torch.optim.Adam([latents], lr=lr)  # Optimizing the latents as well
+    optimizer_latents = torch.optim.Adam([latents], lr=lr)
 
     epoch_losses = []
     best_loss = float('inf')
@@ -59,7 +63,7 @@ def train_auto_encoder(batch_size=32,
     # Training loop
     for epoch in range(epochs):
         epoch_start_time = time.time()  # Start measuring time for this epoch
-        model.train()  # Set model to training mode
+        model.train()  # set model to training mode
         epoch_loss = 0
 
         for _, (indices, x) in enumerate(train_dl):
@@ -98,7 +102,7 @@ def train_auto_encoder(batch_size=32,
             early_stop_counter += 1
 
         # If early stop counter reaches the patience limit, stop training
-        if early_stop_counter >= early_stopping_patience:
+        if early_stop_counter >= patience:
             print(f"Early stopping at epoch {epoch+1}, best loss: {best_loss:.4f}")
             break
 
@@ -118,10 +122,10 @@ def train_auto_encoder(batch_size=32,
     print(f'Total training time: {total_training_time/60:.2f} min')
 
     # Save model and latent vectors after training
-    torch.save(model.state_dict(), 'auto_decoder.pth')
-    torch.save(latents, 'latent_vectors.pth')
+    torch.save(model.state_dict(), f'{output_dir}/auto_decoder.pth')
+    torch.save(latents, f'{output_dir}/latent_vectors.pth')
 
-    # ---------------- Plot the Loss ----------------
+    # ---------------- Save the Loss Plot ----------------
     plt.figure()
     plt.plot(range(1, len(epoch_losses) + 1), epoch_losses, label="Training Loss")
     plt.xlabel("Epoch")
@@ -129,4 +133,5 @@ def train_auto_encoder(batch_size=32,
     plt.title("Training Loss Over Epochs")
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.savefig(f'{output_dir}/loss_plot.png')  # Save the loss plot to a file
+    plt.close()  # Close the plot to avoid displaying
