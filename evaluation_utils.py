@@ -11,7 +11,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=2):
     Get sample indices for constant sampling, where we pick `num_samples_per_class` 
     images from each class in the dataset.
 
-    :param dataset: The dataset to sample from (assumes dataset returns (index, image, label))
+    :param dataset: The dataset to sample from (assumes dataset returns (image, label))
     :param num_samples_per_class: Number of samples to retrieve per class
     :return: List of indices corresponding to selected samples
     """
@@ -19,7 +19,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=2):
     class_indices = defaultdict(list)
 
     # Iterate through the dataset and collect indices for each class
-    for idx, (_, _, label) in enumerate(dataset):
+    for idx, (image, label) in enumerate(dataset):
         class_indices[label].append(idx)
 
     # Consistently select `num_samples_per_class` from each class for comparison
