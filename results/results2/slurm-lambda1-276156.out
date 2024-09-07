@@ -1,0 +1,92 @@
+*** SLURM BATCH JOB 'test_job' STARTING ***
+*** Activating environment cs236781-hw ***
+Epoch [1/100], Loss: 0.5208, Epoch Time: 2.15 seconds, Total Time: 2.15 seconds
+Epoch [2/100], Loss: 0.4843, Epoch Time: 1.21 seconds, Total Time: 3.36 seconds
+Epoch [3/100], Loss: 0.4604, Epoch Time: 1.21 seconds, Total Time: 4.57 seconds
+Epoch [4/100], Loss: 0.4119, Epoch Time: 1.21 seconds, Total Time: 5.79 seconds
+Epoch [5/100], Loss: 0.3592, Epoch Time: 1.21 seconds, Total Time: 7.00 seconds
+Epoch [6/100], Loss: 0.3466, Epoch Time: 1.21 seconds, Total Time: 8.21 seconds
+Epoch [7/100], Loss: 0.3543, Epoch Time: 1.21 seconds, Total Time: 9.42 seconds
+Epoch [8/100], Loss: 0.3357, Epoch Time: 1.21 seconds, Total Time: 10.63 seconds
+Epoch [9/100], Loss: 0.3282, Epoch Time: 1.21 seconds, Total Time: 11.84 seconds
+Epoch [10/100], Loss: 0.3244, Epoch Time: 1.21 seconds, Total Time: 13.06 seconds
+Epoch [11/100], Loss: 0.3149, Epoch Time: 1.21 seconds, Total Time: 14.27 seconds
+Epoch [12/100], Loss: 0.3137, Epoch Time: 1.21 seconds, Total Time: 15.48 seconds
+Epoch [13/100], Loss: 0.3070, Epoch Time: 1.21 seconds, Total Time: 16.69 seconds
+Epoch [14/100], Loss: 0.2977, Epoch Time: 1.21 seconds, Total Time: 17.91 seconds
+Epoch [15/100], Loss: 0.2916, Epoch Time: 1.21 seconds, Total Time: 19.11 seconds
+Epoch [16/100], Loss: 0.2857, Epoch Time: 1.21 seconds, Total Time: 20.33 seconds
+Epoch [17/100], Loss: 0.2815, Epoch Time: 1.21 seconds, Total Time: 21.54 seconds
+Epoch [18/100], Loss: 0.2772, Epoch Time: 1.21 seconds, Total Time: 22.75 seconds
+Epoch [19/100], Loss: 0.2738, Epoch Time: 1.21 seconds, Total Time: 23.96 seconds
+Epoch [20/100], Loss: 0.2716, Epoch Time: 1.21 seconds, Total Time: 25.18 seconds
+Epoch [21/100], Loss: 0.2711, Epoch Time: 1.21 seconds, Total Time: 26.39 seconds
+Epoch [22/100], Loss: 0.2704, Epoch Time: 1.21 seconds, Total Time: 27.60 seconds
+Epoch [23/100], Loss: 0.2706, Epoch Time: 1.21 seconds, Total Time: 28.81 seconds
+Epoch [24/100], Loss: 0.2709, Epoch Time: 1.21 seconds, Total Time: 30.02 seconds
+Epoch [25/100], Loss: 0.2707, Epoch Time: 1.21 seconds, Total Time: 31.24 seconds
+Epoch [26/100], Loss: 0.2707, Epoch Time: 1.21 seconds, Total Time: 32.45 seconds
+Epoch [27/100], Loss: 0.2725, Epoch Time: 1.21 seconds, Total Time: 33.66 seconds
+Epoch [28/100], Loss: 0.2736, Epoch Time: 1.21 seconds, Total Time: 34.87 seconds
+Epoch [29/100], Loss: 0.2733, Epoch Time: 1.21 seconds, Total Time: 36.09 seconds
+Epoch [30/100], Loss: 0.2720, Epoch Time: 1.21 seconds, Total Time: 37.30 seconds
+Epoch [31/100], Loss: 0.2709, Epoch Time: 1.21 seconds, Total Time: 38.51 seconds
+Epoch [32/100], Loss: 0.2698, Epoch Time: 1.21 seconds, Total Time: 39.73 seconds
+Epoch [33/100], Loss: 0.2688, Epoch Time: 1.21 seconds, Total Time: 40.94 seconds
+Epoch [34/100], Loss: 0.2679, Epoch Time: 1.22 seconds, Total Time: 42.15 seconds
+Epoch [35/100], Loss: 0.2672, Epoch Time: 1.21 seconds, Total Time: 43.37 seconds
+Epoch [36/100], Loss: 0.2666, Epoch Time: 1.21 seconds, Total Time: 44.58 seconds
+Epoch [37/100], Loss: 0.2660, Epoch Time: 1.22 seconds, Total Time: 45.79 seconds
+Epoch [38/100], Loss: 0.2654, Epoch Time: 1.21 seconds, Total Time: 47.01 seconds
+Epoch [39/100], Loss: 0.2636, Epoch Time: 1.21 seconds, Total Time: 48.22 seconds
+Epoch [40/100], Loss: 0.2620, Epoch Time: 1.21 seconds, Total Time: 49.43 seconds
+Epoch [41/100], Loss: 0.2605, Epoch Time: 1.21 seconds, Total Time: 50.65 seconds
+Epoch [42/100], Loss: 0.2590, Epoch Time: 1.21 seconds, Total Time: 51.86 seconds
+Epoch [43/100], Loss: 0.2578, Epoch Time: 1.21 seconds, Total Time: 53.07 seconds
+Epoch [44/100], Loss: 0.2571, Epoch Time: 1.21 seconds, Total Time: 54.29 seconds
+Epoch [45/100], Loss: 0.2562, Epoch Time: 1.21 seconds, Total Time: 55.50 seconds
+Epoch [46/100], Loss: 0.2557, Epoch Time: 1.21 seconds, Total Time: 56.71 seconds
+Epoch [47/100], Loss: 0.2552, Epoch Time: 1.21 seconds, Total Time: 57.92 seconds
+Epoch [48/100], Loss: 0.2547, Epoch Time: 1.21 seconds, Total Time: 59.13 seconds
+Epoch [49/100], Loss: 0.2541, Epoch Time: 1.22 seconds, Total Time: 60.35 seconds
+Epoch [50/100], Loss: 0.2536, Epoch Time: 1.21 seconds, Total Time: 61.56 seconds
+Epoch [51/100], Loss: 0.2533, Epoch Time: 1.21 seconds, Total Time: 62.77 seconds
+Epoch [52/100], Loss: 0.2532, Epoch Time: 1.21 seconds, Total Time: 63.99 seconds
+Epoch [53/100], Loss: 0.2531, Epoch Time: 1.21 seconds, Total Time: 65.20 seconds
+Epoch [54/100], Loss: 0.2529, Epoch Time: 1.21 seconds, Total Time: 66.41 seconds
+Epoch [55/100], Loss: 0.2529, Epoch Time: 1.22 seconds, Total Time: 67.63 seconds
+Epoch [56/100], Loss: 0.2530, Epoch Time: 1.21 seconds, Total Time: 68.84 seconds
+Epoch [57/100], Loss: 0.2532, Epoch Time: 1.21 seconds, Total Time: 70.06 seconds
+Epoch [58/100], Loss: 0.2532, Epoch Time: 1.21 seconds, Total Time: 71.27 seconds
+Epoch [59/100], Loss: 0.2530, Epoch Time: 1.21 seconds, Total Time: 72.48 seconds
+Epoch [60/100], Loss: 0.2532, Epoch Time: 1.21 seconds, Total Time: 73.69 seconds
+Epoch [61/100], Loss: 0.2535, Epoch Time: 1.21 seconds, Total Time: 74.91 seconds
+Epoch [62/100], Loss: 0.2538, Epoch Time: 1.21 seconds, Total Time: 76.12 seconds
+Epoch [63/100], Loss: 0.2542, Epoch Time: 1.21 seconds, Total Time: 77.33 seconds
+Early stopping at epoch 64, best loss: 0.2529
+Total training time: 1.31 min
+Evaluating on Training Set...
+Training Set Loss: 0.2594
+Evaluating on Test Set...
+Epoch [1/20], Test Set Loss: 0.7718
+Epoch [2/20], Test Set Loss: 0.6144
+Epoch [3/20], Test Set Loss: 0.5179
+Epoch [4/20], Test Set Loss: 0.4569
+Epoch [5/20], Test Set Loss: 0.4189
+Epoch [6/20], Test Set Loss: 0.3941
+Epoch [7/20], Test Set Loss: 0.3766
+Epoch [8/20], Test Set Loss: 0.3636
+Epoch [9/20], Test Set Loss: 0.3536
+Epoch [10/20], Test Set Loss: 0.3458
+Epoch [11/20], Test Set Loss: 0.3393
+Epoch [12/20], Test Set Loss: 0.3338
+Epoch [13/20], Test Set Loss: 0.3292
+Epoch [14/20], Test Set Loss: 0.3253
+Epoch [15/20], Test Set Loss: 0.3218
+Epoch [16/20], Test Set Loss: 0.3189
+Epoch [17/20], Test Set Loss: 0.3161
+Epoch [18/20], Test Set Loss: 0.3136
+Epoch [19/20], Test Set Loss: 0.3113
+Epoch [20/20], Test Set Loss: 0.3093
+Test Set Loss: 0.3093
+*** SLURM BATCH JOB 'test_job' DONE ***
