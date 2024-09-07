@@ -17,7 +17,8 @@ def train_auto_encoder(batch_size=32,
                        latent_reg_loss_lambda=1e-5, 
                        normal_latent_initialization_variance=0.1,
                        patience=10,
-                       output_dir=None):
+                       output_dir=None,
+                       **kw):
     """
     Train the AutoDecoder on the Fashion MNIST dataset with Early Stopping.
 
