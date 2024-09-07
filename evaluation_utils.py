@@ -5,7 +5,7 @@ import utils
 from AutoDecoder import AutoDecoder
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, num_samples=5, output_dir=None, filename="reconstructed_images.png"):
+def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png", num_samples=5):
     """
     Save original vs reconstructed images side by side.
 
