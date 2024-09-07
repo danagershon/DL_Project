@@ -57,20 +57,25 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
     
-    num_samples = len(indices)  # Set the number of samples based on the actual number of indices
+    num_samples = len(indices)
+    num_columns = min(num_samples, 5)  # Limit the number of columns to 5
+    num_rows = (num_samples + num_columns - 1) // num_columns  # Calculate the required number of rows
 
     # Plot original vs reconstructed images
-    fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))
+    fig, axs = plt.subplots(2, num_columns, figsize=(num_columns * 2, 4 * num_rows))
+
     for i in range(num_samples):
+        row, col = divmod(i, num_columns)  # Get row and column indices
+
         # Original image
-        axs[0, i].imshow(original_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
-        axs[0, i].axis('off')
-        axs[0, i].set_title('Original')
+        axs[0, col].imshow(original_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
+        axs[0, col].axis('off')
+        axs[0, col].set_title('Original')
 
         # Reconstructed image
-        axs[1, i].imshow(reconstructed_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
-        axs[1, i].axis('off')
-        axs[1, i].set_title('Reconstructed')
+        axs[1, col].imshow(reconstructed_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
+        axs[1, col].axis('off')
+        axs[1, col].set_title('Reconstructed')
 
     # Save the figure
     if output_dir:
