@@ -11,5 +11,6 @@ auto_decoder_hyperparameters = {
     'latent_reg_loss_lambda': 1e-5,
     'normal_latent_initialization_variance': 0.1,
     'latent_epochs_for_test': 20,
-    'latent_lr_for_test': 1e-3
+    'latent_lr_for_test': 1e-3,
+    'early_stopping_patience': 10
 }

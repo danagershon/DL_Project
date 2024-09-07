@@ -14,23 +14,24 @@ def train_auto_encoder(batch_size=32,
                        reconstruction_loss=losses.reconstruction_loss_BCE,
                        latent_initialization="normal", 
                        latent_reg_loss_lambda=1e-5, 
-                       normal_latent_initialization_variance=0.1):
+                       normal_latent_initialization_variance=0.1,
+                       early_stopping_patience=10):
     """
-    Train the AutoDecoder on the Fashion MNIST dataset.
-
-    All of the function parameters are hyperparameters:
+    Train the AutoDecoder on the Fashion MNIST dataset with Early Stopping.
 
     :param batch_size: Size of the mini-batches used for training
     :param latent_dim: Dimensionality of the latent space
-    :param feature_map_size: Number of feature maps to first extract from the latent vector, before going throght CNN (e.g., 128/256/512)
+    :param feature_map_size: Number of feature maps to first extract from the latent vector, before going through CNN
     :param epochs: Number of training epochs
     :param lr: Learning rate for the optimizer
     :param reconstruction_loss: Loss function for reconstruction (BCE or MSE)
     :param latent_initialization: the distribution type to initialize latent vectors from ('normal', 'random', 'uniform')
     :param latent_reg_loss_lambda: L2 regularization strength on latent vectors (if 0, there is no regularization)
     :param normal_latent_initialization_variance: Variance used for normal initialization of latent vectors
+    :param patience: Number of epochs with no improvement after which training will be stopped
     """
-    # load fashion-MNIST
+
+    # Load fashion-MNIST dataset
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=batch_size)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')    
 
@@ -44,14 +45,13 @@ def train_auto_encoder(batch_size=32,
     else:  # normal
         latents = torch.normal(0, normal_latent_initialization_variance, size=(len(train_ds), latent_dim), requires_grad=True, device=device)
 
-    # define optimizers
+    # Define optimizers
     optimizer_model = torch.optim.Adam(model.parameters(), lr=lr)
-    # Since it ia an Auto Decoder, we optimize the latents as well
-    optimizer_latents = torch.optim.Adam([latents], lr=lr)  
-    # TODO: consider different lr for the model and latents
-    # TODO: consider a different optimizer (though Adam is considered good in general)
+    optimizer_latents = torch.optim.Adam([latents], lr=lr)  # Optimizing the latents as well
 
     epoch_losses = []
+    best_loss = float('inf')
+    early_stop_counter = 0
 
     # Start total training time measurement
     total_start_time = time.time()
@@ -59,7 +59,7 @@ def train_auto_encoder(batch_size=32,
     # Training loop
     for epoch in range(epochs):
         epoch_start_time = time.time()  # Start measuring time for this epoch
-        model.train()  # set model to training mode
+        model.train()  # Set model to training mode
         epoch_loss = 0
 
         for _, (indices, x) in enumerate(train_dl):
@@ -86,15 +86,29 @@ def train_auto_encoder(batch_size=32,
             # Accumulate the loss for the epoch
             epoch_loss += loss.item()
 
+        # Calculate average epoch loss
+        avg_epoch_loss = epoch_loss / len(train_dl)
+        epoch_losses.append(avg_epoch_loss)
+
+        # Early stopping condition: check if loss improves
+        if avg_epoch_loss < best_loss:
+            best_loss = avg_epoch_loss
+            early_stop_counter = 0  # Reset the counter if there is an improvement
+        else:
+            early_stop_counter += 1
+
+        # If early stop counter reaches the patience limit, stop training
+        if early_stop_counter >= early_stopping_patience:
+            print(f"Early stopping at epoch {epoch+1}, best loss: {best_loss:.4f}")
+            break
+
         # Calculate time taken for the epoch
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
         total_elapsed_time = epoch_end_time - total_start_time
 
-        avg_epoch_loss = epoch_loss / len(train_dl)
         # Print the average loss, time for this epoch, and total elapsed time
         print(f'Epoch [{epoch+1}/{epochs}], Loss: {avg_epoch_loss:.4f}, Epoch Time: {epoch_duration:.2f} seconds, Total Time: {total_elapsed_time:.2f} seconds')
-        epoch_losses.append(avg_epoch_loss)
 
     # End total training time measurement
     total_end_time = time.time()
@@ -109,7 +123,7 @@ def train_auto_encoder(batch_size=32,
 
     # ---------------- Plot the Loss ----------------
     plt.figure()
-    plt.plot(range(1, epochs+1), epoch_losses, label="Training Loss")
+    plt.plot(range(1, len(epoch_losses) + 1), epoch_losses, label="Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.title("Training Loss Over Epochs")
