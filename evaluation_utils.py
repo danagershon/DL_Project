@@ -32,7 +32,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=1):
 
 def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png"):
     """
-    Save original vs reconstructed images side by side
+    Save original vs reconstructed images side by side.
 
     :param model: Trained AutoDecoder model
     :param latents: Latent vectors of the dataset
@@ -46,20 +46,22 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
         # Get original and reconstructed images
         original_images = []
         reconstructed_images = []
-        
+
         for idx in indices:
             # Original image
-            original_img = dataset[idx][1].float() / 255.0  # Normalize to [0, 1]
+            original_img = dataset[idx][0].float() / 255.0  # Normalize to [0, 1]
             original_images.append(original_img)
 
             # Reconstructed image
             latent_vector = latents[idx].unsqueeze(0)  # Add batch dimension
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
-    
-    # Set up a 2x10 grid (2 rows for original/reconstructed, 10 columns for each class)
+
+    # Define the number of samples (should be the same as the number of indices passed in)
     num_samples = len(indices)
-    fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))  # 2 rows, 1 for original and 1 for reconstructed
+    
+    # Plot original vs reconstructed images in a grid (2 rows: 1 for original, 1 for reconstructed)
+    fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))  # Adjust figure size accordingly
     
     for i in range(num_samples):
         # Original image
