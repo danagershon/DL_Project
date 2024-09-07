@@ -30,9 +30,9 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=2):
     return selected_indices
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png"):
+def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png", max_samples=10):
     """
-    Save original vs reconstructed images side by side.
+    Save original vs reconstructed images side by side, with a limit on the number of samples to display.
 
     :param model: Trained AutoDecoder model
     :param latents: Latent vectors of the dataset
@@ -40,29 +40,34 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
     :param indices: Indices of the samples to display
     :param output_dir: Directory to save the output images
     :param filename: Filename to save the reconstructed images
+    :param max_samples: Maximum number of samples to display
     """
     model.eval()  # Set model to evaluation mode
     with torch.no_grad():
+        # Limit the number of samples to avoid excessive figure size
+        indices = indices[:max_samples]
+        num_samples = len(indices)
+
         # Get original and reconstructed images
         original_images = []
         reconstructed_images = []
-        
+
         for idx in indices:
             # Original image
             original_img = dataset[idx][1].float() / 255.0  # Normalize to [0, 1]
             original_images.append(original_img)
-            
+
             # Reconstructed image
             latent_vector = latents[idx].unsqueeze(0)  # Add batch dimension
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
-    
-    num_samples = len(indices)
-    num_columns = min(num_samples, 5)  # Limit the number of columns to 5
-    num_rows = (num_samples + num_columns - 1) // num_columns  # Calculate the required number of rows
+
+    # Set up rows and columns for subplots (max 5 columns)
+    num_columns = min(num_samples, 5)
+    num_rows = (num_samples + num_columns - 1) // num_columns  # Calculate rows needed
 
     # Plot original vs reconstructed images
-    fig, axs = plt.subplots(2, num_columns, figsize=(num_columns * 2, 4 * num_rows))
+    fig, axs = plt.subplots(2, num_columns, figsize=(num_columns * 2, num_rows * 4))
 
     for i in range(num_samples):
         row, col = divmod(i, num_columns)  # Get row and column indices
