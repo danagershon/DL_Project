@@ -31,9 +31,10 @@ def main(train_flag, results_dir=None):
     # Evaluate the model using saved files from the results directory
     evaluation_utils.load_and_evaluate_model(
         model_path=f'{results_dir}/variational_auto_decoder.pth',
-        latent_path=f'{results_dir}/variational_latent_vectors.pth',
+        latent_path=f'{results_dir}/latent_vectors.pth',
         hyperparameters=variational_auto_decoder_hyperparameters,
-        output_dir=results_dir
+        output_dir=results_dir,
+        is_VAD = True
     )
 
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 import utils
 from AutoDecoder import AutoDecoder
-
+from VariationalAutoDecoder import VariationalAutoDecoder
 
 def get_classwise_sample_indices(dataset, num_samples_per_class=1):
     """
@@ -30,7 +30,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=1):
     return selected_indices
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png"):
+def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png", is_VAD = False):
     """
     Save original vs reconstructed images side by side.
 
@@ -41,28 +41,32 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
     :param output_dir: Directory to save the output images
     :param filename: Filename to save the reconstructed images
     """
+    # Define the number of samples (should be the same as the number of indices passed in)
+    num_samples = min(5, len(indices))
+    
     model.eval()  # Set model to evaluation mode
     with torch.no_grad():
         # Get original and reconstructed images
         original_images = []
         reconstructed_images = []
 
-        for idx in indices:
+        for idx in indices[0 : num_samples]:
             # Original image
-            original_img = dataset[idx][0].float() / 255.0  # Normalize to [0, 1]
+            if is_VAD:
+                original_img = dataset[idx][1].float() / 255.0  # Normalize to [0, 1]
+            else:
+                original_img = dataset[idx][0].float() / 255.0  # Normalize to [0, 1]
             original_images.append(original_img)
-
+            
             # Reconstructed image
             latent_vector = latents[idx].unsqueeze(0)  # Add batch dimension
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
-
-    # Define the number of samples (should be the same as the number of indices passed in)
-    num_samples = len(indices)
+    
     
     # Plot original vs reconstructed images in a grid (2 rows: 1 for original, 1 for reconstructed)
     fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))  # Adjust figure size accordingly
-    
+    print(num_samples)
     for i in range(num_samples):
         # Original image
         axs[0, i].imshow(original_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
@@ -70,6 +74,7 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
         axs[0, i].set_title('Original')
 
         # Reconstructed image
+        #print("Recon", reconstructed_images[i].shape)
         axs[1, i].imshow(reconstructed_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
         axs[1, i].axis('off')
         axs[1, i].set_title('Reconstructed')
@@ -82,7 +87,7 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
     plt.close()  # Close the figure to avoid displaying
 
 
-def evaluate_model(model, data_loader, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=False, constant_sampling=True):
+def evaluate_model(model, data_loader, latents, device, hyperparameters, output_dir, is_train_set=True, visualize=False, constant_sampling=True, is_VAD=False):
     """
     Evaluate the model on a given dataset. For the training set, it uses the passed latents.
     For the test set, it initializes and optimizes new latent vectors from a normal distribution.
@@ -132,7 +137,7 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, output_
                 sample_indices = get_classwise_sample_indices(data_loader.dataset, num_samples_per_class=1)  # Sample one per class
             else:
                 sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="train_reconstructed_images.png")
+            show_original_vs_reconstructed(model, latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="train_reconstructed_images.png", is_VAD=is_VAD)
 
         return avg_loss
     else:
@@ -173,12 +178,12 @@ def evaluate_model(model, data_loader, latents, device, hyperparameters, output_
                 sample_indices = get_classwise_sample_indices(data_loader.dataset, num_samples_per_class=1)
             else:
                 sample_indices = torch.randint(0, len(data_loader.dataset), (5,))
-            show_original_vs_reconstructed(model, test_latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="test_reconstructed_images.png")
+            show_original_vs_reconstructed(model, test_latents, data_loader.dataset, sample_indices, output_dir=output_dir, filename="test_reconstructed_images.png", is_VAD=is_VAD)
 
         return avg_loss
 
 
-def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir):
+def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir, is_VAD = False):
     """
     Load the trained model and latent vectors from saved .pth files and evaluate on the training and test sets.
     The function extracts relevant hyperparameters from the passed dictionary.
@@ -195,10 +200,15 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir
     train_ds, train_dl, test_ds, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=hyperparameters['batch_size'])
 
     # Initialize the model with the same architecture
-    model = AutoDecoder(latent_dim=hyperparameters['latent_dim'], 
+    if not is_VAD:
+        model = AutoDecoder(latent_dim=hyperparameters['latent_dim'], 
                         feature_map_size=hyperparameters['feature_map_size'],
                         dropout_rate=hyperparameters['dropout_rate']).to(device)
-
+    else:
+        model = VariationalAutoDecoder(input_dim=hyperparameters['input_dim'], latent_dim=hyperparameters['latent_dim'], 
+                        feature_map_size=hyperparameters['feature_map_size'],
+                        dropout_rate=hyperparameters['dropout_rate']).to(device)
+    
     # Load the saved model weights
     model.load_state_dict(torch.load(model_path, map_location=device))
 
@@ -216,7 +226,8 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir
         hyperparameters=hyperparameters, 
         output_dir=output_dir, 
         is_train_set=True, 
-        visualize=True
+        visualize=True,
+        is_VAD=is_VAD
     )
     print(f"Training Set Loss: {train_loss:.4f}")
 
@@ -230,6 +241,7 @@ def load_and_evaluate_model(model_path, latent_path, hyperparameters, output_dir
         hyperparameters=hyperparameters, 
         output_dir=output_dir, 
         is_train_set=False, 
-        visualize=True
+        visualize=True,
+        is_VAD=is_VAD
     )
     print(f"Test Set Loss: {test_loss:.4f}")
