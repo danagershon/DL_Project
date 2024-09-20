@@ -30,7 +30,7 @@ def get_classwise_sample_indices(dataset, num_samples_per_class=1):
     return selected_indices
 
 
-def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png", is_VAD = False):
+def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=None, filename="reconstructed_images.png", is_VAD=False):
     """
     Save original vs reconstructed images side by side.
 
@@ -50,19 +50,18 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
         original_images = []
         reconstructed_images = []
 
-        for idx in indices[0 : num_samples]:
+        for idx in indices[0:num_samples]:
             # Original image
-            if is_VAD:
-                original_img = dataset[idx][1].float() / 255.0  # Normalize to [0, 1]
-            else:
-                original_img = dataset[idx][0].float() / 255.0  # Normalize to [0, 1]
+            data_item = dataset[idx]
+            # Since dataset returns (index, image), we use data_item[1] to get the image
+            original_img = data_item[1].float() / 255.0  # Normalize to [0, 1]
+            
             original_images.append(original_img)
             
             # Reconstructed image
             latent_vector = latents[idx].unsqueeze(0)  # Add batch dimension
             reconstructed_img = model(latent_vector).squeeze(0)  # Remove batch dimension
             reconstructed_images.append(reconstructed_img)
-    
     
     # Plot original vs reconstructed images in a grid (2 rows: 1 for original, 1 for reconstructed)
     fig, axs = plt.subplots(2, num_samples, figsize=(num_samples * 2, 4))  # Adjust figure size accordingly
@@ -74,7 +73,6 @@ def show_original_vs_reconstructed(model, latents, dataset, indices, output_dir=
         axs[0, i].set_title('Original')
 
         # Reconstructed image
-        #print("Recon", reconstructed_images[i].shape)
         axs[1, i].imshow(reconstructed_images[i].cpu().squeeze(), cmap='gray')  # Use .squeeze() to remove channel dimension
         axs[1, i].axis('off')
         axs[1, i].set_title('Reconstructed')
