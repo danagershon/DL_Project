@@ -1,10 +1,10 @@
+import torch
 import torch.nn as nn
 
-
-class AutoDecoder(nn.Module):
+class VariationalAutoDecoder(nn.Module):
     """
-    AutoDecoder class that maps latent vectors to reconstructed images using 
-    a fully connected layer and a decoder made of ConvTranspose2d layers with optional dropout.
+    Variational AutoDecoder that maps latent vectors sampled from a distribution to reconstructed images,
+    using a ConvTranspose2d decoder.
     """
 
     def __init__(self, latent_dim=64, img_channels=1, feature_map_size=512, initial_map_size=7, dropout_rate=0):
@@ -16,13 +16,13 @@ class AutoDecoder(nn.Module):
         :param dropout_rate: Dropout rate, if 0, no dropout will be applied
         """
         super().__init__()
-
+        
         self.feature_map_size = feature_map_size
         self.initial_map_size = initial_map_size
         self.fc_output_size = self.initial_map_size * self.initial_map_size * self.feature_map_size
         self.dropout_rate = dropout_rate
 
-        # Fully connected layers to expand the latent vector into a feature map
+        # Fully connected layers to extract a feature map from the latent vector
         self.fc = nn.Sequential(
             nn.Linear(latent_dim, self.fc_output_size),
             nn.ReLU(),
@@ -31,7 +31,7 @@ class AutoDecoder(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout_rate) if dropout_rate > 0 else nn.Identity()
         )
-        
+
         # Decoder architecture using ConvTranspose2d layers to upsample and reconstruct the image
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(self.feature_map_size, 256, kernel_size=3, stride=2, padding=1, output_padding=1),
@@ -48,16 +48,16 @@ class AutoDecoder(nn.Module):
 
     def forward(self, z):
         """
-        Forward pass of the auto-decoder.
-
-        :param z: the latent vector for the sample
+        Forward pass of the variational auto-decoder.
+        
+        :param z: the pre-sampled latent vector
         :return: the reconstructed image
         """
         # Expand latent vector to feature map
         z = self.fc(z)
         # Reshape to (batch_size, feature_map_size, initial_map_size, initial_map_size)
         z = z.view(-1, self.feature_map_size, self.initial_map_size, self.initial_map_size)
-        # Pass through decoder to upsample and reconstruct the image
+        # Decode the latent vector into the reconstructed image
         z = self.decoder(z)
 
         return z

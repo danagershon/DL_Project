@@ -4,7 +4,6 @@ import os
 def get_next_results_dir(base_dir="results"):
     """
     Get the next available results directory (results1, results2, etc.) inside the base_dir.
-    
     :param base_dir: The base directory where the resultsX directories are created.
     :return: The path to the next results directory.
     """
@@ -22,6 +21,22 @@ def get_next_results_dir(base_dir="results"):
     next_dir = os.path.join(base_dir, f"results{next_index}")
     os.makedirs(next_dir)
     return next_dir
+
+
+def create_subdirectories(output_dir, is_VAD):
+    """
+    Create 'AD' or 'VAD' subdirectory inside the output directory depending on the model type.
+    :param output_dir: The base results directory (e.g., 'results/resultsX').
+    :param is_VAD: Boolean, True for VAD subdirectory, False for AD subdirectory.
+    :return: The path to the created subdirectory.
+    """
+    model_type_dir = "VAD" if is_VAD else "AD"
+    model_output_dir = os.path.join(output_dir, model_type_dir)
+    
+    if not os.path.exists(model_output_dir):
+        os.makedirs(model_output_dir)
+    
+    return model_output_dir
 
 
 def get_latest_results_dir(base_dir="results"):
@@ -47,7 +62,6 @@ def get_latest_results_dir(base_dir="results"):
 def save_hyperparameters(hyperparameters, output_dir):
     """
     Save the hyperparameters to a text file in the output directory.
-    
     :param hyperparameters: Dictionary containing the hyperparameters.
     :param output_dir: Directory where the hyperparameters should be saved.
     """
@@ -60,7 +74,6 @@ def save_hyperparameters(hyperparameters, output_dir):
 def save_model_architecture(model, output_dir):
     """
     Save the model architecture (layers) to a text file in the output directory.
-    
     :param model: The model whose architecture should be saved.
     :param output_dir: Directory where the architecture should be saved.
     """
