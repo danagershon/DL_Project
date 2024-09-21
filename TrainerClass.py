@@ -177,6 +177,25 @@ class ADTrainer(BaseTrainer):
 
 class VADTrainer(BaseTrainer):
 
+    def __init__(self, output_dir, 
+                 model_filename, 
+                 latent_filename, 
+                 batch_size=32, 
+                 latent_dim=256, 
+                 feature_map_size=256, 
+                 epochs=100, lr=0.0001, 
+                 reconstruction_loss=losses.reconstruction_loss_BCE, 
+                 latent_initialization="normal", 
+                 latent_reg_loss_lambda=0.00001, 
+                 normal_latent_initialization_variance=0.1, 
+                 patience=10, 
+                 dropout_rate=0, 
+                 kl_weight=0.001,  # exclusive for VAD
+                 **kw
+                 ):
+        super().__init__(output_dir, model_filename, latent_filename, batch_size, latent_dim, feature_map_size, epochs, lr, reconstruction_loss, latent_initialization, latent_reg_loss_lambda, normal_latent_initialization_variance, patience, dropout_rate, **kw)
+        self.kl_weight = kl_weight
+
     def initialize_model(self):
         self.model = VariationalAutoDecoder(latent_dim=self.latent_dim, feature_map_size=self.feature_map_size, dropout_rate=self.dropout_rate).to(self.device)
         saving_utilities.save_model_architecture(self.model, self.output_dir)
@@ -205,9 +224,11 @@ class VADTrainer(BaseTrainer):
         batch_logvar = logvar[indices]
 
         recon_loss = self.reconstruction_loss(x, x_rec)
-        # KL Divergence loss
-        kl_loss = -0.5 * torch.sum(1 + batch_logvar - batch_mu.pow(2) - batch_logvar.exp()) / self.batch_size  # TODO: wht divide by batch size?
+
+        # KL Divergence loss (weighted)
+        kl_loss = -0.5 * torch.sum(1 + batch_logvar - batch_mu.pow(2) - batch_logvar.exp()) / self.batch_size  # TODO: why divide by batch size?
+
         # L2 regularization loss for the latent vectors
         reg_loss = self.latent_reg_loss_lambda * torch.norm(mu, p=2)
 
-        return recon_loss + kl_loss + reg_loss
+        return recon_loss + self.kl_weight * kl_loss + reg_loss

@@ -61,9 +61,13 @@ def main(train_flag, invoke_AD, invoke_VAD, results_dir=None):
         return
     
     if invoke_AD:
+        print("------ Auto Decoder Start ------")
         TrainEvalModel(train_flag, results_dir, is_VAD=False).invoke()
+        print("------ Auto Decoder Done ------")
     if invoke_VAD:
+        print("------ Variational Auto Start ------")
         TrainEvalModel(train_flag, results_dir, is_VAD=True).invoke()
+        print("------ Variational Auto Decoder Done ------")
 
 
 if __name__ == "__main__":

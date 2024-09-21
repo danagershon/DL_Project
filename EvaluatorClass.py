@@ -149,6 +149,7 @@ class EvaluatorAD(EvaluatorBase):
         return latents
     
     def compute_loss(self, x, x_rec):
+        # copmute reconstruction loss w/o latent reg
         return self.hyperparameters['reconstruction_loss'](x, x_rec)
 
     def evaluate_train(self, data_loader):
@@ -232,11 +233,13 @@ class EvaluatorVAD(EvaluatorBase):
         return mu, logvar
     
     def compute_loss(self, x, x_rec, batch_logvar, batch_mu):
-        # compute ELBO loss w/o reg
+        # compute ELBO loss w/o latent reg
         recon_loss = self.hyperparameters['reconstruction_loss'](x, x_rec)
+        
+        # KL Divergence loss (weighted)
         kl_loss = -0.5 * torch.sum(1 + batch_logvar - batch_mu.pow(2) - batch_logvar.exp()) / x.size(0)
 
-        return recon_loss + kl_loss
+        return recon_loss + self.hyperparameters['kl_weight'] * kl_loss
 
     def evaluate_train(self, data_loader):
         model = self.load_model_from_pth()

@@ -45,5 +45,6 @@ vad_hyperparameters = {
     'normal_latent_initialization_variance': 0.1,
     'latent_epochs_for_test': 20,
     'latent_lr_for_test': 1e-3,
-    'dropout_rate': 0.2  # 0 means no dropout
+    'dropout_rate': 0.2,  # 0 means no dropout
+    'kl_weight': 0.001  # exclusive for VAD
 }
