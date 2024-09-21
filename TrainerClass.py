@@ -23,7 +23,8 @@ class BaseTrainer:
                  latent_reg_loss_lambda=1e-5, 
                  normal_latent_initialization_variance=0.1, 
                  patience=10, 
-                 dropout_rate=0
+                 dropout_rate=0,
+                 **kw
                  ):
         self.batch_size = batch_size
         self.latent_dim = latent_dim

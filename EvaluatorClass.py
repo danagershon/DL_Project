@@ -1,7 +1,7 @@
 
 import torch
 import torch.optim
-
+from collections import defaultdict
 import matplotlib.pyplot as plt
 import os
 import utils
@@ -47,7 +47,7 @@ class EvaluatorBase:
     def evaluate_test(self, data_loader):
         raise NotImplementedError
     
-    def evaluate(self, train_dl, test_dl):
+    def evaluate(self):
         # Load the dataset
         _, train_dl, _, test_dl = utils.create_dataloaders(data_path="dataset", batch_size=self.hyperparameters['batch_size'])
 
@@ -61,7 +61,7 @@ class EvaluatorBase:
         test_loss = self.evaluate_test(test_dl)
         print(f"Test Set Loss: {test_loss:.4f}")
     
-    def get_classwise_sample_indices(dataset, num_samples_per_class=1):
+    def get_classwise_sample_indices(self, dataset, num_samples_per_class=1):
         """
         Get sample indices for constant sampling, where we pick `num_samples_per_class` 
         images from each class in the dataset.
@@ -87,11 +87,11 @@ class EvaluatorBase:
     def visualize_sampled_images_and_rec(self, model, latents, dataset, filename, is_VAD):
         if self.visualize:
             if self.constant_sampling:
-                sample_indices = self.get_classwise_sample_indices(dataset, num_samples_per_class=1)
+                sample_indices = self.get_classwise_sample_indices(dataset)
             else:
                 sample_indices = torch.randint(0, len(dataset), (5,))
 
-            self.visualize_results(model, latents, dataset, sample_indices, self.output_dir, filename, is_VAD)
+            self.visualize_results(model, latents, dataset, sample_indices, filename, is_VAD)
 
     
     def visualize_results(self, model, latents, dataset, indices, filename, is_VAD):
@@ -136,9 +136,9 @@ class EvaluatorBase:
 
 class EvaluatorAD(EvaluatorBase):
 
-    def __init__(self, hyperparameters, model_filename, latent_filename, output_dir, device):
-        super().__init__(hyperparameters, model_filename, latent_filename, output_dir, device)
-        self.model_class = AutoDecoder
+    def __init__(self, hyperparameters, model_filename, latent_filename, output_dir):
+        super().__init__(hyperparameters, model_filename, latent_filename, output_dir)
+        self.model_cls = AutoDecoder
 
     def load_latents(self):
         # load latent vectors from .pth file
@@ -148,7 +148,7 @@ class EvaluatorAD(EvaluatorBase):
         return latents
     
     def compute_loss(self, x, x_rec):
-        return self.hyperparameters['reconstruction_loss'](x_rec, x)
+        return self.hyperparameters['reconstruction_loss'](x, x_rec)
 
     def evaluate_train(self, data_loader):
         model = self.load_model_from_pth()
@@ -218,9 +218,9 @@ class EvaluatorAD(EvaluatorBase):
 
 class EvaluatorVAD(EvaluatorBase):
 
-    def __init__(self, hyperparameters, model_filename, latent_filename, output_dir, device):
-        super().__init__(hyperparameters, model_filename, latent_filename, output_dir, device)
-        self.model_class = VariationalAutoDecoder
+    def __init__(self, hyperparameters, model_filename, latent_filename, output_dir):
+        super().__init__(hyperparameters, model_filename, latent_filename, output_dir)
+        self.model_cls = VariationalAutoDecoder
 
     def load_latents(self):
         # load mu and logvar from .pth file
@@ -232,7 +232,7 @@ class EvaluatorVAD(EvaluatorBase):
     
     def compute_loss(self, x, x_rec, batch_logvar, batch_mu):
         # compute ELBO loss w/o reg
-        recon_loss = self.hyperparameters['reconstruction_loss'](x_rec, x)
+        recon_loss = self.hyperparameters['reconstruction_loss'](x, x_rec)
         kl_loss = -0.5 * torch.sum(1 + batch_logvar - batch_mu.pow(2) - batch_logvar.exp()) / x.size(0)
 
         return recon_loss + kl_loss
