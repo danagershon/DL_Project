@@ -17,6 +17,8 @@ class TrainEvalModel():
         self.trainer_cls = VADTrainer if is_VAD else ADTrainer
         self.evaluator_cls = EvaluatorVAD if is_VAD else EvaluatorAD
         self.hyperparameters = vad_hyperparameters if is_VAD else auto_decoder_hyperparameters
+        
+        saving_utilities.save_hyperparameters(self.hyperparameters, self.model_output_dir)
     
     def train_model(self):
         trainer = self.trainer_cls(self.model_output_dir, 
@@ -65,7 +67,7 @@ def main(train_flag, invoke_AD, invoke_VAD, results_dir=None):
         TrainEvalModel(train_flag, results_dir, is_VAD=False).invoke()
         print("------ Auto Decoder Done ------")
     if invoke_VAD:
-        print("------ Variational Auto Start ------")
+        print("------ Variational Auto Decoder Start ------")
         TrainEvalModel(train_flag, results_dir, is_VAD=True).invoke()
         print("------ Variational Auto Decoder Done ------")
 
