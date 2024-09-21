@@ -142,7 +142,8 @@ class EvaluatorAD(EvaluatorBase):
 
     def load_latents(self):
         # load latent vectors from .pth file
-        latents = torch.load(self.latent_path, map_location=self.device)
+        latent_params = torch.load(self.latent_path, map_location=self.device)
+        latents = latent_params[0]
         latents.requires_grad = False
 
         return latents
@@ -225,8 +226,8 @@ class EvaluatorVAD(EvaluatorBase):
     def load_latents(self):
         # load mu and logvar from .pth file
         latent_params = torch.load(self.latent_path, map_location=self.device)
-        mu = latent_params['mu']
-        logvar = latent_params['logvar']
+        mu = latent_params[0]
+        logvar = latent_params[1]
 
         return mu, logvar
     

@@ -45,7 +45,7 @@ class BaseTrainer:
         self.model = None
         self.train_dl = None
         self.train_ds = None
-        self.latent_params = None  # latents for AD, (mu, logvar) for VAD
+        self.latent_params = None  # [latents] for AD, [mu, logvar] for VAD
 
     def initialize_model(self):
         """This method should be overridden by child classes to initialize the model."""
@@ -70,7 +70,7 @@ class BaseTrainer:
         self.initialize_latents()  # latents for AD, (mu, logvar) for VAD
 
         optimizer_model = torch.optim.Adam(self.model.parameters(), lr=self.lr)
-        optimizer_latents = torch.optim.Adam([self.latent_params], lr=self.lr)
+        optimizer_latents = torch.optim.Adam(self.latent_params, lr=self.lr)
 
         epoch_losses = []
         best_loss = float('inf')
@@ -153,19 +153,24 @@ class ADTrainer(BaseTrainer):
 
     def initialize_latents(self):
         if self.latent_initialization == "random":
-            self.latent_params = torch.randn(len(self.train_ds), self.latent_dim, requires_grad=True, device=self.device)
+            latent_vectors = torch.randn(len(self.train_ds), self.latent_dim, requires_grad=True, device=self.device)
         elif self.latent_initialization == "uniform":
-            self.latent_params = torch.rand(len(self.train_ds), self.latent_dim, requires_grad=True, device=self.device)
+            latent_vectors = torch.rand(len(self.train_ds), self.latent_dim, requires_grad=True, device=self.device)
         else:  # normal
-            self.latent_params = torch.normal(0, self.normal_latent_initialization_variance, size=(len(self.train_ds), self.latent_dim), requires_grad=True, device=self.device)
+            latent_vectors = torch.normal(0, self.normal_latent_initialization_variance, size=(len(self.train_ds), self.latent_dim), requires_grad=True, device=self.device)
+
+        self.latent_params = [latent_vectors]
 
     def get_latent_vectors(self, indices):
-        return self.latent_params[indices]  # latent_params is just the latents
+        latent_vectors = self.latent_params[0]  # latent_params has just the latents
+        return latent_vectors[indices]
 
     def compute_loss(self, x, x_rec, indices):
         recon_loss = self.reconstruction_loss(x, x_rec)
         # L2 regularization loss for the latent vectors
-        reg_loss = self.latent_reg_loss_lambda * torch.norm(self.latent_params, p=2)
+        latent_vectors = self.latent_params[0]
+        batch_latent_vectors = latent_vectors[indices]
+        reg_loss = self.latent_reg_loss_lambda * torch.norm(batch_latent_vectors, p=2)
 
         return recon_loss + reg_loss
 
@@ -181,7 +186,7 @@ class VADTrainer(BaseTrainer):
         mu = torch.normal(0, self.normal_latent_initialization_variance, size=(len(self.train_ds), self.latent_dim), requires_grad=True, device=self.device)
         # initialize log variance (log(sigma^2)) close to -1 for stability
         logvar = torch.full_like(mu, -1.0, requires_grad=True) 
-        self.latent_params = (mu, logvar)
+        self.latent_params = [mu, logvar]
 
     def get_latent_vectors(self, indices):
         mu, logvar = self.latent_params
